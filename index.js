@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 let OS = require('os');
 let FS = require('fs');
 let AWS = require('aws-sdk');
