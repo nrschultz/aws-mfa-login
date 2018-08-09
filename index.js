@@ -3,6 +3,7 @@ let OS = require('os');
 let FS = require('fs');
 let AWS = require('aws-sdk');
 let Yargs = require('yargs');
+let ini = require('ini');
 
 function login(mfaToken) {
     // Always use credentials stored in ~/.aws-login-credentials
@@ -19,16 +20,16 @@ function login(mfaToken) {
          if (err) {
             console.log(err, err.stack); // an error occurred
          } else {
-            // overwrite `~/.aws/credentials
-            let content = [
-                `[default]`,
-                `aws_access_key_id = ${data.Credentials.AccessKeyId}`,
-                `aws_secret_access_key = ${data.Credentials.SecretAccessKey}`,
-                `aws_session_token = ${data.Credentials.SessionToken}`
-            ].join("\n");
+            let creds = ini.parse(FS.readFileSync(`${OS.homedir()}/.aws/credentials`, 'utf-8'))
 
-            // write to ~/.aws/credentials
-            FS.writeFileSync(`${OS.homedir()}/.aws/credentials`, content)
+            creds.default = {
+                aws_access_key_id: data.Credentials.AccessKeyId,
+                aws_secret_access_key: data.Credentials.SecretAccessKey,
+                aws_session_token: data.Credentials.SessionToken,
+            }
+
+            // overwrite default section of `~/.aws/credentials
+            FS.writeFileSync(`${OS.homedir()}/.aws/credentials`, ini.stringify(creds, { whitespace: true }))
          }
     });
 }
